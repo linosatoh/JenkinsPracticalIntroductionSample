@@ -9,7 +9,7 @@
 	<body>
 		<h1>サンプルプログラム</h1>
 		<form action="./SampleServlet" method="post">
-			名字: <input type="text" name="LastName" /><br />
+			苗字: <input type="text" name="LastName" /><br />
 			名前: <input type="text" name="FirstName" /><br />
 			<input type="hidden" name="action" value="hello" />
 			<input type="submit" name="submit" value="送信" />

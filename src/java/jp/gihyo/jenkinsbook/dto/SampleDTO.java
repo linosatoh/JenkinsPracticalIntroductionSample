@@ -1,5 +1,7 @@
 package jp.gihyo.jenkinsbook.dto;
 
+import java.io.Serializable;
+
 /**
  * DTO class for SampleServlet.
  */

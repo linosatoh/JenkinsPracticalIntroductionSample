@@ -3,7 +3,9 @@ package jp.gihyo.jenkinsbook.dto;
 /**
  * DTO class for SampleServlet.
  */
-public class SampleDTO {
+public class SampleDTO implements Serializable {
+
+    private static final long serialVersionUID = 32042353208L;
     /**
      * First name of the user.
      */

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="Shift_JIS" ?>
+<project name="sample_project" default="main" basedir=".">
+	<!-- mainターゲット -->
+	<target name="main" depends="clean,init,checkstyle,findbugs,coverage,war">
+	</target>
+	
+	<!-- ソースコード関連パスの設定 -->
+	<property name="src.dir" location="./src" />
+	<property name="java.src.dir" location="./src/java" />
+	<property name="test.src.dir" location="./src/test" />
+	
+	<!-- クラス関連パスの設定 -->
+	<property name="build.dir" location="./build" />
+	<property name="class.dir" location="${build.dir}/classes" />
+	<property name="java.class.dir" location="${class.dir}/java" />
+	<property name="test.class.dir" location="${class.dir}/test" />
+	
+	<!-- ライブラリ関連パスの設定 -->
+	<property name="lib.servlet.dir" location="./lib/servlet" />
+	<property name="lib.junit.dir" location="./lib/junit" />
+	<property name="lib.mock.dir" location="./lib/mock" />
+	
+	<!-- レポート関連パスの設定 -->
+	<property name="report.dir" location="${build.dir}/report" />
+	
+	<!-- ソースコードのコンパイル -->
+	<target name="compile" description="ソースコードのコンパイル">
+		<mkdir dir="${class.dir}" />
+		<mkdir dir="${java.class.dir}" />
+		<javac srcdir="${java.src.dir}" destdir="${java.class.dir}" includeAntRuntime="true" debug="true">
+			<classpath>
+				<fileset dir="${lib.servlet.dir}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+		
+		<!-- テストコードのコンパイル -->
+		<mkdir dir="${test.class.dir}" />
+		<javac srcdir="${test.src.dir}" destdir="${test.class.dir}" includeAntRuntime="true">
+			<classpath>
+				<pathelement location="${java.class.dir}" />
+				<fileset dir="${lib.servlet.dir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.junit.dir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.mock.dir}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+	
+	<!-- Coberturaコードをクラスファイルにマージ -->
+	<property name="convert.dir" location="${build.dir}/convert" />
+	<property name="lib.cobertura.dir" location="./lib/cobertura" />
+	<path id="cobertura.lib">
+		<fileset dir="${lib.cobertura.dir}">
+			<include name="cobertura.jar" />
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	
+	<taskdef classpathref="cobertura.lib" resource="tasks.properties" />
+	<target name="instrument" depends="compile">
+		<delete file="cobertura.ser" />
+		<mkdir dir="${convert.dir}" />
+		<cobertura-instrument todir="${convert.dir}">
+			<fileset dir="${java.class.dir}">
+				<include name="**/*.class" />
+			</fileset>
+		</cobertura-instrument>
+	</target>
+	
+	<!-- Checkstyleの実行 -->
+	<property name="checkstyle.lib.dir" location="./lib/checkstyle" />
+	<property name="report.checkstyle.dir" location="${report.dir}/checkstyle" />
+	<path id="checkstyle.lib">
+		<pathelement location="${checkstyle.lib.dir}/checkstyle-5.3-all.jar" />
+	</path>
+	
+	<taskdef resource="checkstyletask.properties" classpathref="checkstyle.lib" />
+	<target name="checkstyle" depends="compile" description="Checkstyleの実行">
+		<mkdir dir="${report.checkstyle.dir}" />
+		<checkstyle config="${checkstyle.lib.dir}/sun_checks.xml" failureProperty="checkstyle.failure" failOnViolation="false">
+			<formatter type="xml" tofile="${report.checkstyle.dir}/checkstyle-result.xml" />
+			<fileset dir="${java.src.dir}" includes="**/*.java" />
+		</checkstyle>
+	</target>
+	
+	<!-- FindBugsの実行 -->
+	<property name="findbugs.lib.dir" location="./lib/findbugs" />
+	<property name="report.findbugs.dir" location="${report.dir}/findbugs" />
+	<path id="findbugs.lib">
+		<pathelement location="${findbugs.lib.dir}/findbugs.jar" />
+	</path>
+	
+	<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpathref="findbugs.lib" />
+	<target name="findbugs" depends="compile" description="FindBugsの実行">
+		<mkdir dir="${report.findbugs.dir}" />
+		<findbugs home="${findbugs.lib.dir}" output="xml" outputFile="${report.findbugs.dir}/findbugs.xml">
+			<class location="${java.class.dir}" />
+			<auxClasspath path="${lib.servlet.dir}/servlet-api.jar" />
+			<sourcePath path="${java.src.dir}" />
+		</findbugs>
+	</target>
+	
+	<!-- ユニットテストの実行 -->
+	<property name="report.junit.dir" location="${report.dir}/junit" />
+	<target name="test" depends="instrument" description="ユニットテストの実行">
+		<mkdir dir="${report.junit.dir}" />
+		<junit fork="yes" printsummary="yes" haltonfailure="no">
+			<sysproperty key="net.sourceforge.cobertura.datafile" file="cobertura.ser" />
+			<classpath>
+				<pathelement location="${convert.dir}" />
+				<pathelement location="${java.class.dir}" />
+				<pathelement location="${test.class.dir}" />
+				<fileset dir="${lib.servlet.dir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.junit.dir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.mock.dir}">
+					<include name="*.jar" />
+				</fileset>
+				<path refid="cobertura.lib" />
+			</classpath>
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${report.junit.dir}">
+				<fileset dir="${test.src.dir}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+	
+	<!-- カバレッジレポートの作成 -->
+	<property name="report.cobertura.dir" location="${report.dir}/cobertura" />
+	<target name="coverage" depends="test" description="カバレッジレポートの作成">
+	<mkdir dir="${report.cobertura.dir}" />
+	<cobertura-report format="xml" destdir="${report.cobertura.dir}" >
+		<fileset dir="${java.src.dir}">
+			<include name="**/*.java" />
+		</fileset>
+	</cobertura-report>
+	</target>
+	
+	<!-- WARファイルの作成 -->
+	<target name="war" depends="compile" description="WARファイルの作成">
+		<war destfile="./${ant.project.name}.war" update="true" duplicate="preserve" webxml="./web/WEB-INF/web.xml">
+			<classes dir="${java.class.dir}" />
+			<lib file="./web/WEB-INF/lib/*.jar" />
+			<fileset dir="./web/" excludes="**/web.xml" />
+		</war>
+	</target>
+	
+	<!-- ビルドデータの削除 -->
+	<target name="clean" description="ビルドデータの削除">
+		<delete dir="${build.dir}" />
+	</target>
+	
+	<!-- ビルド環境の初期化 -->
+	<target name="init" description="ビルド環境の初期化">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${report.dir}" />
+	</target>
+</project>

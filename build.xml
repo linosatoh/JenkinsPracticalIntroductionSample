@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="Shift_JIS" ?>
+<project name="sample_project" default="main" basedir=".">
+	<!-- mainターゲット -->
+	<target name="main" depends="clean,init,war">
+	</target>
+	
+	<!-- ソースコード関連パスの設定 -->
+	<property name="src.dir" location="./src" />
+	<property name="java.src.dir" location="./src/java" />
+	<property name="test.src.dir" location="./src/test" />
+	
+	<!-- クラス関連パスの設定 -->
+	<property name="build.dir" location="./build" />
+	<property name="class.dir" location="${build.dir}/classes" />
+	<property name="java.class.dir" location="${class.dir}/java" />
+	<property name="test.class.dir" location="${class.dir}/test" />
+	
+	<!-- ライブラリ関連パスの設定 -->
+	<property name="lib.servlet.dir" location="./lib/servlet" />
+	<property name="lib.junit.dir" location="./lib/junit" />
+	<property name="lib.mock.dir" location="./lib/mock" />
+	
+	<!-- レポート関連パスの設定 -->
+	<property name="report.dir" location="${build.dir}/report" />
+	
+	<!-- ソースコードのコンパイル -->
+	<target name="compile" description="ソースコードのコンパイル">
+		<mkdir dir="${class.dir}" />
+		<mkdir dir="${java.class.dir}" />
+		<javac srcdir="${java.src.dir}" destdir="${java.class.dir}" includeAntRuntime="true" debug="true">
+			<classpath>
+				<fileset dir="${lib.servlet.dir}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+	
+	<!-- WARファイルの作成 -->
+	<target name="war" depends="compile" description="WARファイルの作成">
+		<war destfile="./${ant.project.name}.war" update="true" duplicate="preserve" webxml="./web/WEB-INF/web.xml">
+			<classes dir="${java.class.dir}" />
+			<lib file="./web/WEB-INF/lib/*.jar" />
+			<fileset dir="./web/" excludes="**/web.xml" />
+		</war>
+	</target>
+	
+	<!-- ビルドデータの削除 -->
+	<target name="clean" description="ビルドデータの削除">
+		<delete dir="${build.dir}" />
+	</target>
+	
+	<!-- ビルド環境の初期化 -->
+	<target name="init" description="ビルド環境の初期化">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${report.dir}" />
+	</target>
+</project>

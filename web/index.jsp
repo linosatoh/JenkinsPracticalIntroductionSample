@@ -9,8 +9,8 @@
 	<body>
 		<h1>サンプルプログラム</h1>
 		<form action="./SampleServlet" method="post">
-			名字(ひらがな): <input type="text" name="LastName" /><br />
-			名前(ひらがな): <input type="text" name="FirstName" /><br />
+			名字(カタカナ): <input type="text" name="LastName" /><br />
+			名前(カタカナ): <input type="text" name="FirstName" /><br />
 			<input type="hidden" name="action" value="hello" />
 			<input type="submit" name="submit" value="送信" />
 		</form>
